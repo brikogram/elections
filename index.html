@@ -1,0 +1,1232 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Suivi des sondages de la présidentielle 2027, soirée électorale commune par commune et calendrier des prochains scrutins.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Urne 2027</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : bandeau de soirée électorale + trois vues (sondages, soirée, calendrier) ; chiffres en chasse fixe, titres condensés type habillage TV. */
+:root {
+  --paper: #f4f5f7;
+  --sheet: #ffffff;
+  --ink: #12151c;
+  --muted: #5b6270;
+  --rule: #dcdfe5;
+  --urne: #c3302d;        /* accent : rouge des panneaux électoraux */
+  --urne-soft: #f7dedd;
+  --map-empty: #e3e6eb;
+  --map-line: #ffffff;
+  --ok: #1f7a4d;
+  --display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e1116; --sheet: #161a21; --ink: #e9ebf0; --muted: #9aa1ad; --rule: #2a2f39;
+    --urne: #f0625a; --urne-soft: #3a1f20; --map-empty: #262b34; --map-line: #0e1116; --ok: #4fc58b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e1116; --sheet: #161a21; --ink: #e9ebf0; --muted: #9aa1ad; --rule: #2a2f39;
+  --urne: #f0625a; --urne-soft: #3a1f20; --map-empty: #262b34; --map-line: #0e1116; --ok: #4fc58b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--paper); color: var(--ink); }
+body { font-family: var(--body); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+h1, h2, h3 { font-family: var(--display); font-stretch: 78%; margin: 0; text-wrap: balance; line-height: 1.05; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--urne); outline-offset: 2px; }
+
+/* bandeau */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 9; background: var(--ink); color: var(--paper); }
+.top .wrap { display: flex; align-items: center; gap: 20px; padding-block: 10px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand b { font-family: var(--display); font-stretch: 62%; font-weight: 900; font-size: 26px; letter-spacing: .01em; text-transform: uppercase; }
+.brand b i { font-style: normal; color: var(--urne); }
+.brand span { font-family: var(--mono); font-size: 11px; opacity: .7; letter-spacing: .06em; text-transform: uppercase; }
+nav.tabs { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+nav.tabs a { color: var(--paper); text-decoration: none; padding: 6px 12px; border-radius: 3px; font-family: var(--display); font-stretch: 85%; font-weight: 600; font-size: 15px; letter-spacing: .02em; text-transform: uppercase; opacity: .75; }
+nav.tabs a[aria-current="page"] { opacity: 1; background: var(--urne); color: #fff; }
+nav.tabs a:hover { opacity: 1; }
+.ticker { background: var(--urne); color: #fff; font-family: var(--mono); font-size: 12px; letter-spacing: .04em; }
+.ticker .wrap { display: flex; gap: 22px; padding-block: 5px; overflow: hidden; white-space: nowrap; }
+.ticker b { font-weight: 600; }
+
+main { padding-block: 26px 60px; }
+.view[hidden] { display: none !important; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.lede { color: var(--muted); max-width: 64ch; margin: 8px 0 0; }
+.head { display: flex; justify-content: space-between; align-items: end; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+.head h1 { font-size: clamp(30px, 5vw, 50px); font-weight: 800; }
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; }
+.pad { padding: 18px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--rule); background: var(--sheet); padding: 4px 10px; border-radius: 999px; font-size: 13px; }
+.chip[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; display: inline-block; }
+.btn { border: 1px solid var(--ink); background: var(--ink); color: var(--paper); padding: 7px 14px; border-radius: 3px; font-weight: 600; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
+.btn.red { background: var(--urne); border-color: var(--urne); color: #fff; }
+.btn:disabled { opacity: .45; cursor: default; }
+.note { font-size: 13px; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; background: var(--sheet); }
+.seg button { border: 0; background: transparent; padding: 6px 12px; font-size: 13px; font-weight: 600; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+/* ---- Sondages ---- */
+.avg { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 860px) { .avg { grid-template-columns: 1fr; } }
+.board { display: grid; gap: 2px; }
+.brow { display: grid; grid-template-columns: 170px minmax(0, 1fr) 62px; align-items: center; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--rule); }
+.brow:last-child { border-bottom: 0; }
+.brow .who b { display: block; font-family: var(--display); font-stretch: 82%; font-weight: 700; font-size: 17px; line-height: 1.1; }
+.brow .who span { font-size: 12px; color: var(--muted); }
+.track { position: relative; height: 18px; background: var(--paper); border-radius: 2px; }
+.track .bar { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; }
+.track .rng { position: absolute; top: 50%; height: 2px; background: var(--ink); opacity: .35; transform: translateY(-50%); }
+.track .cut { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 1px dashed var(--muted); }
+.brow .pct { text-align: right; font-family: var(--mono); font-weight: 600; font-size: 17px; }
+.brow.top2 .who b::after { content: "2nd tour"; font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; background: var(--urne-soft); color: var(--urne); padding: 1px 5px; border-radius: 2px; margin-left: 8px; vertical-align: 3px; }
+@media (max-width: 520px) { .brow { grid-template-columns: 116px minmax(0, 1fr) 52px; } .brow .who b { font-size: 15px; } }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chart-wrap { overflow-x: auto; }
+svg.trend { display: block; width: 100%; min-width: 560px; height: auto; }
+svg.trend text { fill: var(--muted); font-family: var(--mono); font-size: 11px; }
+svg.trend .grid { stroke: var(--rule); stroke-width: 1; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.duels { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.duel { border: 1px solid var(--rule); border-radius: 4px; padding: 10px 12px; background: var(--sheet); }
+.duel .names { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; gap: 8px; }
+.duel .split { display: flex; height: 10px; border-radius: 2px; overflow: hidden; margin: 6px 0; }
+.duel .vals { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 14px; }
+.duel .src { font-size: 11px; color: var(--muted); margin-top: 4px; }
+table.polls { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.polls th, table.polls td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.polls th { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+table.polls tr.poll { cursor: pointer; }
+table.polls tr.poll:hover td { background: var(--paper); }
+.hyps { display: grid; gap: 6px; padding: 4px 0 8px; }
+.hyp { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; }
+.hyp span { white-space: nowrap; }
+.mini { display: flex; height: 8px; width: 160px; border-radius: 2px; overflow: hidden; background: var(--paper); }
+.tablebox { overflow-x: auto; }
+form.add { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+form.add label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+form.add input, form.add textarea, form.add select { border: 1px solid var(--rule); background: var(--paper); border-radius: 3px; padding: 7px 9px; color: var(--ink); }
+form.add .full { grid-column: 1 / -1; }
+.state { padding: 28px; text-align: center; color: var(--muted); }
+.state b { display: block; color: var(--ink); font-family: var(--display); font-stretch: 85%; font-size: 20px; margin-bottom: 4px; }
+.stack { display: grid; gap: 18px; }
+.sec-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.sec-h h2 { font-size: 24px; font-weight: 750; }
+
+/* ---- Soirée électorale ---- */
+.night { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; }
+@media (max-width: 980px) { .night { grid-template-columns: 1fr; } }
+.mapbox { position: relative; background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+.maptools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--rule); }
+.maptools .grow { flex: 1; }
+.canvas-host { position: relative; aspect-ratio: 1 / 0.98; max-width: 100%; touch-action: none; }
+.canvas-host canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-family: var(--mono); font-size: 13px; }
+.embargo { position: absolute; left: 12px; right: 12px; top: 12px; background: var(--ink); color: var(--paper); padding: 12px 14px; border-radius: 3px; font-size: 14px; display: flex; gap: 12px; align-items: center; }
+.embargo b { font-family: var(--display); font-stretch: 75%; font-size: 26px; }
+.tip { position: absolute; pointer-events: none; background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 10px 12px; font-size: 13px; min-width: 210px; box-shadow: 0 6px 22px rgba(0,0,0,.15); z-index: 3; }
+.tip h4 { margin: 0 0 2px; font-family: var(--display); font-stretch: 85%; font-size: 17px; }
+.tip .r { display: grid; grid-template-columns: 10px 1fr auto; gap: 6px; align-items: center; }
+.clock { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.clock .t { font-family: var(--display); font-stretch: 70%; font-weight: 800; font-size: 46px; line-height: 1; }
+.stat3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.stat3 div { border-top: 2px solid var(--ink); padding-top: 4px; }
+.stat3 b { display: block; font-family: var(--mono); font-size: 17px; }
+.stat3 span { font-size: 12px; color: var(--muted); }
+.progress { height: 4px; background: var(--paper); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--urne); width: 0; }
+.estim { border: 2px solid var(--urne); border-radius: 4px; padding: 12px 14px; background: var(--urne-soft); }
+.estim .k { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--urne); }
+.estim h3 { font-size: 24px; margin-top: 4px; }
+.feed { max-height: 240px; overflow-y: auto; display: grid; gap: 0; }
+.feed div { display: grid; grid-template-columns: 46px 1fr; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--rule); font-size: 13px; }
+.feed div span { font-family: var(--mono); color: var(--muted); }
+.ctl-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.search { position: relative; }
+.search input { border: 1px solid var(--rule); background: var(--paper); border-radius: 3px; padding: 6px 10px; width: 200px; max-width: 100%; }
+.search ul { position: absolute; z-index: 4; top: 100%; left: 0; right: 0; margin: 4px 0 0; padding: 4px; list-style: none; background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; box-shadow: 0 6px 22px rgba(0,0,0,.12); min-width: 240px; }
+.search li button { width: 100%; text-align: left; border: 0; background: transparent; padding: 6px 8px; border-radius: 3px; }
+.search li button:hover, .search li button:focus-visible { background: var(--paper); }
+.detail h3 { font-size: 22px; }
+.scen { display: grid; gap: 6px; }
+.scen label { display: grid; grid-template-columns: 12px 1fr 72px; gap: 8px; align-items: center; font-size: 13px; }
+.scen input { border: 1px solid var(--rule); background: var(--paper); border-radius: 3px; padding: 3px 6px; text-align: right; font-family: var(--mono); }
+.matrix { overflow-x: auto; }
+.matrix table { border-collapse: collapse; font-size: 13px; width: 100%; }
+.matrix td, .matrix th { padding: 4px 6px; border-bottom: 1px solid var(--rule); text-align: right; }
+.matrix th:first-child, .matrix td:first-child { text-align: left; }
+.matrix input { width: 54px; border: 1px solid var(--rule); background: var(--paper); border-radius: 3px; padding: 2px 4px; text-align: right; font-family: var(--mono); }
+details.method summary { cursor: pointer; font-weight: 600; }
+details.method p { color: var(--muted); font-size: 14px; max-width: 70ch; }
+.extras { display: grid; gap: 4px; font-size: 13px; }
+.extras div { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+
+/* ---- Calendrier ---- */
+.cal { display: grid; gap: 0; }
+.cal-row { display: grid; grid-template-columns: 160px minmax(0, 1fr) 190px; gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--rule); align-items: start; }
+.cal-row:first-child { border-top: 3px solid var(--ink); }
+.cal-row .when b { display: block; font-family: var(--display); font-stretch: 72%; font-weight: 800; font-size: 30px; line-height: 1; }
+.cal-row .when span { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.cal-row h3 { font-size: 22px; }
+.cal-row p { margin: 4px 0 0; color: var(--muted); font-size: 14px; max-width: 62ch; }
+.status { justify-self: end; text-align: right; display: grid; gap: 6px; justify-items: end; }
+.pill { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; border: 1px solid var(--rule); }
+.pill.live { background: var(--urne); border-color: var(--urne); color: #fff; }
+@media (max-width: 700px) { .cal-row { grid-template-columns: 1fr; gap: 8px; } .status { justify-self: start; justify-items: start; text-align: left; } }
+footer { border-top: 1px solid var(--rule); padding-block: 18px 30px; font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><b>Urne<i>·</i>27</b><span>Présidentielle · 18 avril &amp; 2 mai 2027</span></div>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#sondages" data-view="sondages">Sondages</a>
+      <a href="#soiree" data-view="soiree">Soirée électorale</a>
+      <a href="#calendrier" data-view="calendrier">Calendrier</a>
+    </nav>
+  </div>
+</header>
+<div class="ticker"><div class="wrap" id="ticker"><span>Chargement…</span></div></div>
+
+<main class="wrap">
+
+<!-- ===================== SONDAGES ===================== -->
+<section class="view" id="v-sondages" aria-labelledby="h-sondages">
+  <div class="head">
+    <div>
+      <div class="eyebrow">Intentions de vote · 1er tour</div>
+      <h1 id="h-sondages">Où en sont les sondages</h1>
+      <p class="lede">Moyenne des derniers sondages de chaque institut, sur les 30 derniers jours. Les instituts testent plusieurs configurations de candidats : choisis celle qui t'intéresse.</p>
+    </div>
+    <div class="filters" role="group" aria-label="Configuration testée" id="hypFilter"></div>
+  </div>
+
+  <div class="stack">
+    <div class="avg">
+      <div class="panel pad">
+        <div class="sec-h"><h2>Moyenne actuelle</h2><span class="note" id="avgMeta"></span></div>
+        <div class="board" id="board"><div class="state"><b>Chargement des sondages</b>Connexion à la base…</div></div>
+        <p class="note" style="margin:10px 0 0">Trait fin : écart entre l'institut le plus bas et le plus haut. Pointillé : seuil théorique de qualification estimé par le 2e de la moyenne.</p>
+      </div>
+      <div class="panel pad">
+        <div class="sec-h"><h2>Duels de second tour</h2><span class="note">dernière mesure publiée</span></div>
+        <div class="duels" id="duels"><div class="state">Chargement…</div></div>
+      </div>
+    </div>
+
+    <div class="panel pad">
+      <div class="sec-h"><h2>Évolution depuis juin 2026</h2><span class="note">points : chaque sondage · courbe : moyenne mobile sur 21 jours</span></div>
+      <div class="chart-wrap"><svg class="trend" id="trend" viewBox="0 0 900 360" role="img" aria-label="Évolution des intentions de vote"></svg></div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="panel pad">
+      <div class="sec-h"><h2>Tous les sondages</h2><span class="note" id="pollCount"></span></div>
+      <div class="tablebox">
+        <table class="polls">
+          <thead><tr><th>Terrain</th><th>Institut</th><th>Échantillon</th><th>Configurations</th><th>Tête de la 1re configuration</th></tr></thead>
+          <tbody id="pollRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+  </div>
+</section>
+
+<!-- ===================== SOIRÉE ===================== -->
+<section class="view" id="v-soiree" aria-labelledby="h-soiree" hidden>
+  <div class="head">
+    <div>
+      <div class="eyebrow" id="nightEyebrow">Simulation · communes de France métropolitaine</div>
+      <h1 id="h-soiree">Soirée électorale</h1>
+      <p class="lede" id="nightLede">Avant le vote, la carte rejoue une soirée à partir de la moyenne des sondages. Le soir du 18 avril, elle bascule sur les résultats officiels, commune par commune.</p>
+    </div>
+    <div class="ctl-row">
+      <div class="seg" role="group" aria-label="Source des résultats">
+        <button type="button" id="srcSim" aria-pressed="true">Simulation</button>
+        <button type="button" id="srcLive" aria-pressed="false">Résultats officiels</button>
+      </div>
+      <div class="seg" role="group" aria-label="Tour">
+        <button type="button" id="r1" aria-pressed="true">1er tour</button>
+        <button type="button" id="r2" aria-pressed="false">2nd tour</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="night">
+    <div class="stack">
+      <div class="mapbox">
+        <div class="maptools">
+          <div class="ctl-row">
+            <button class="btn red" type="button" id="play">▶ Lancer la soirée</button>
+            <select id="speed" aria-label="Durée de la simulation" class="btn ghost">
+              <option value="30">en 30 s</option><option value="60" selected>en 1 min</option><option value="120">en 2 min</option><option value="300">en 5 min</option>
+            </select>
+            <button class="btn ghost" type="button" id="skip">Tout dépouiller</button>
+            <button class="btn ghost" type="button" id="reset">Remettre à zéro</button>
+          </div>
+          <span class="grow"></span>
+          <div class="search">
+            <input id="q" type="search" placeholder="Chercher une commune" autocomplete="off" aria-label="Chercher une commune">
+            <ul id="qList" hidden></ul>
+          </div>
+        </div>
+        <div class="maptools">
+          <span class="note">Couleur :</span>
+          <select id="viewSel" class="btn ghost" aria-label="Mode de coloration"></select>
+          <span class="grow"></span>
+          <span class="note">Molette ou pincer pour zoomer</span>
+        </div>
+        <div class="canvas-host" id="host">
+          <canvas id="map"></canvas>
+          <div class="loading" id="mapLoading">Chargement des 35 228 communes…</div>
+          <div class="embargo" id="embargo" hidden><b>20:00</b><span>Aucun résultat ni estimation ne peut être publié avant la fermeture des derniers bureaux (code électoral, art. L52-2). Le dépouillement a commencé.</span></div>
+          <div class="tip" id="tip" hidden></div>
+        </div>
+      </div>
+      <div class="panel pad detail" id="detail" hidden></div>
+    </div>
+
+    <aside class="stack">
+      <div class="panel pad">
+        <div class="clock"><span class="t num" id="clk">18:00</span><span class="note" id="clkNote">Bureaux ouverts</span></div>
+        <div class="stat3">
+          <div><b id="sCom">0</b><span>communes dépouillées</span></div>
+          <div><b id="sPart">—</b><span>participation</span></div>
+          <div><b id="sExp">—</b><span>exprimés</span></div>
+        </div>
+        <div class="progress"><i id="prog"></i></div>
+      </div>
+      <div class="estim" id="estim" hidden></div>
+      <div class="panel pad">
+        <div class="sec-h"><h2 id="resTitle">Résultats nationaux</h2><span class="note" id="resNote"></span></div>
+        <div class="board" id="natBoard"></div>
+      </div>
+      <div class="panel pad">
+        <div class="sec-h"><h2>Fil de la soirée</h2></div>
+        <div class="feed" id="feed"><div><span>—</span>Lance la soirée pour suivre le dépouillement.</div></div>
+      </div>
+      <div class="panel pad" id="scenBox">
+        <div class="sec-h"><h2>Scénario</h2><button class="btn ghost" type="button" id="scenReset">Revenir aux sondages</button></div>
+        <p class="note" style="margin:0 0 8px">Score national visé au 1er tour (%). Le total est remis à 100 automatiquement.</p>
+        <div class="scen" id="scen"></div>
+      </div>
+      <div class="panel pad" id="matBox" hidden>
+        <div class="sec-h"><h2>Reports de voix</h2></div>
+        <p class="note" style="margin:0 0 8px">Part des électeurs de chaque candidat éliminé qui se reporte sur chaque finaliste (%). Le reste s'abstient ou vote blanc. Ce sont des hypothèses, à ajuster.</p>
+        <div class="matrix" id="matrix"></div>
+      </div>
+      <div class="panel pad">
+        <div class="sec-h"><h2>Hors carte</h2></div>
+        <div class="extras" id="extras"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="panel pad" style="margin-top:18px">
+    <details class="method">
+      <summary>Comment fonctionne la carte</summary>
+      <p><b>Simulation.</b> Chaque commune reçoit une base modélisée : la moyenne des sondages, ajustée selon la densité de population et des tendances géographiques connues (vote plus fort pour le RN dans le Nord-Est et sur le pourtour méditerranéen, pour LFI en Seine-Saint-Denis, etc.). Ce n'est pas le résultat de 2022 commune par commune : la base est calée pour que le total national retombe exactement sur la moyenne des sondages. À chaque lancement, une erreur de sondage aléatoire (environ 1,5 point) et un bruit local sont ajoutés.</p>
+      <p><b>Résultats officiels.</b> Le soir du vote, les résultats publiés par le ministère de l'Intérieur sont intégrés au site au fil de la soirée, et la carte se recharge seule chaque minute. Les communes sans résultat restent grises.</p>
+      <p><b>Populations</b> : référentiel des communes (Etalab, découpage administratif). <b>Contours</b> : communes de France métropolitaine simplifiées. Outre-mer et Français de l'étranger sont comptés dans les totaux et listés à part.</p>
+    </details>
+  </div>
+</section>
+
+<!-- ===================== CALENDRIER ===================== -->
+<section class="view" id="v-calendrier" aria-labelledby="h-cal" hidden>
+  <div class="head">
+    <div>
+      <div class="eyebrow">Prochains scrutins</div>
+      <h1 id="h-cal">Le calendrier électoral</h1>
+      <p class="lede">La présidentielle est couverte de bout en bout. Les scrutins suivants réutiliseront le même moteur de carte, à la maille qui leur correspond.</p>
+    </div>
+  </div>
+  <div class="cal" id="cal"></div>
+  <p class="note" style="margin-top:14px">Source des dates : service-public.fr. Les dates précises sont fixées par décret, de 6 semaines à 3 mois avant le scrutin selon l'élection.</p>
+</section>
+
+</main>
+<footer><div class="wrap">Sondages relevés depuis les publications des instituts (agrégés par vote-scope.com), duels de second tour d'après sondax.fr. Les intentions de vote mesurent un rapport de force à un instant donné et ne sont pas des prévisions. Chaque sondage a une marge d'erreur (environ 1 à 3 points selon l'échantillon), précisée dans sa notice publiée par la Commission des sondages. Base de simulation modélisée, non officielle.</div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+(function () {
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const fmtPct = (x, d = 1) => (x == null || isNaN(x)) ? "—" : x.toFixed(d).replace(".", ",") + " %";
+const fmtInt = n => Math.round(n).toLocaleString("fr-FR");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ------------------------------------------------------------------ candidats
+const PEOPLE = {
+  "Le Pen":        { id: "lepen", nom: "Marine Le Pen", parti: "RN", color: "#27357e" },
+  "Bardella":      { id: "bardella", nom: "Jordan Bardella", parti: "RN", color: "#4a5aa8" },
+  "Mélenchon":     { id: "melenchon", nom: "Jean-Luc Mélenchon", parti: "LFI", color: "#d8402d" },
+  "Philippe":      { id: "philippe", nom: "Édouard Philippe", parti: "Horizons", color: "#e6a032" },
+  "Attal":         { id: "attal", nom: "Gabriel Attal", parti: "Renaissance", color: "#d9c23a" },
+  "Glucksmann":    { id: "glucksmann", nom: "Raphaël Glucksmann", parti: "Place publique", color: "#e0679e" },
+  "Retailleau":    { id: "retailleau", nom: "Bruno Retailleau", parti: "LR", color: "#3f8ed4" },
+  "Lisnard":       { id: "lisnard", nom: "David Lisnard", parti: "Nouvelle Énergie", color: "#2fa3a8" },
+  "Zemmour":       { id: "zemmour", nom: "Éric Zemmour", parti: "Reconquête", color: "#5d4030" },
+  "Tondelier":     { id: "tondelier", nom: "Marine Tondelier", parti: "Les Écologistes", color: "#3a9e55" },
+  "Roussel":       { id: "roussel", nom: "Fabien Roussel", parti: "PCF", color: "#9e1d22" },
+  "Dupont-Aignan": { id: "nda", nom: "Nicolas Dupont-Aignan", parti: "Debout la France", color: "#7a5ca8" },
+  "Arthaud":       { id: "arthaud", nom: "Nathalie Arthaud", parti: "LO", color: "#6e2a2a" },
+  "Hollande":      { id: "hollande", nom: "François Hollande", parti: "PS", color: "#f08aa0" },
+  "Villepin":      { id: "villepin", nom: "Dominique de Villepin", parti: "La France humaniste", color: "#8a8f6a" },
+  "Ruffin":        { id: "ruffin", nom: "François Ruffin", parti: "Debout !", color: "#c4582b" },
+};
+const person = k => PEOPLE[k] || { id: k, nom: k, parti: "", color: "#9aa0a6" };
+const MAIN = ["Le Pen", "Mélenchon", "Philippe", "Glucksmann", "Attal", "Retailleau", "Lisnard", "Zemmour", "Tondelier", "Roussel", "Dupont-Aignan", "Arthaud"];
+
+// ------------------------------------------------------------------ routing
+const VIEWS = ["sondages", "soiree", "calendrier"];
+function route() {
+  const h = (location.hash || "").slice(1);
+  const v = VIEWS.includes(h) ? h : (SITE.phase === "resultats" ? "soiree" : "sondages");
+  VIEWS.forEach(n => { $("#v-" + n).hidden = n !== v; });
+  document.querySelectorAll("nav.tabs a").forEach(a => a.setAttribute("aria-current", a.dataset.view === v ? "page" : "false"));
+  if (v === "soiree") Night.ensure();
+}
+window.addEventListener("hashchange", route);
+
+// ------------------------------------------------------------------ état du site (base partagée)
+const SITE = { phase: "sondages", polls: [], duels: null };
+
+// ------------------------------------------------------------------ dates
+const TODAY = new Date();
+const T1 = new Date("2027-04-18T20:00:00+02:00");
+const daysTo = d => Math.ceil((d - TODAY) / 86400000);
+function ticker() {
+  const t = $("#ticker");
+  const avg = Polls.currentAverage();
+  const lead = avg.slice(0, 3).map(r => `<span>${esc(person(r.k).nom.split(" ").slice(-1)[0].toUpperCase())} <b>${fmtPct(r.mean)}</b></span>`).join("");
+  t.innerHTML = `<span><b>J-${daysTo(T1)}</b> avant le 1er tour</span>` + (lead ? `<span>Moyenne des sondages :</span>${lead}` : "") + `<span>${SITE.polls.length} sondages suivis</span>`;
+}
+
+// ================================================================== SONDAGES
+const Polls = (function () {
+  let filter = "Philippe";
+  let shown = new Set(["Le Pen", "Mélenchon", "Philippe", "Glucksmann", "Attal", "Retailleau", "Zemmour"]);
+  const FILTERS = [["Philippe", "Avec Philippe"], ["Attal", "Avec Attal"], ["Lisnard", "Avec Lisnard"], ["*", "Toutes les configurations"]];
+
+  function hypsOf(p) {
+    return (p.hypotheses || []).filter(h => filter === "*" || h[filter] != null);
+  }
+  // une valeur par sondage et par candidat (moyenne de ses configurations retenues)
+  function pollValues(p) {
+    const hs = hypsOf(p); if (!hs.length) return null;
+    const acc = {};
+    hs.forEach(h => Object.entries(h).forEach(([k, v]) => { (acc[k] = acc[k] || []).push(v); }));
+    const out = {};
+    Object.entries(acc).forEach(([k, a]) => { out[k] = a.reduce((s, x) => s + x, 0) / a.length; });
+    // Bardella testé à la place de Le Pen : ligne RN unique
+    if (out["Bardella"] != null && out["Le Pen"] == null) { out["Le Pen"] = out["Bardella"]; out.__rnBardella = true; }
+    delete out["Bardella"];
+    return out;
+  }
+  function currentAverage() {
+    const polls = SITE.polls.filter(p => p.tour !== 2);
+    if (!polls.length) return [];
+    const last = polls.reduce((m, p) => p.date > m ? p.date : m, "");
+    const cutoff = new Date(new Date(last) - 30 * 86400000).toISOString().slice(0, 10);
+    const byInst = {};
+    polls.filter(p => p.date >= cutoff).forEach(p => {
+      const v = pollValues(p); if (!v) return;
+      const key = p.institut.toLowerCase();
+      if (!byInst[key] || byInst[key].date < p.date) byInst[key] = { date: p.date, v };
+    });
+    const inst = Object.values(byInst);
+    const cands = {};
+    inst.forEach(({ v }) => Object.entries(v).forEach(([k, x]) => { if (k.startsWith("__")) return; (cands[k] = cands[k] || []).push(x); }));
+    const rows = Object.entries(cands).filter(([, a]) => a.length >= Math.max(1, Math.ceil(inst.length / 2)))
+      .map(([k, a]) => ({ k, mean: a.reduce((s, x) => s + x, 0) / a.length, min: Math.min(...a), max: Math.max(...a), n: a.length }));
+    rows.sort((a, b) => b.mean - a.mean);
+    rows.meta = { instituts: inst.length, from: cutoff, to: last };
+    return rows;
+  }
+
+  function renderFilters() {
+    $("#hypFilter").innerHTML = FILTERS.map(([k, l]) => `<button type="button" class="chip" data-f="${k}" aria-pressed="${filter === k}">${l}</button>`).join("");
+  }
+  $("#hypFilter").addEventListener("click", e => {
+    const b = e.target.closest("[data-f]"); if (!b) return;
+    filter = b.dataset.f; renderAll(); Night.syncFromPolls();
+  });
+
+  function renderBoard() {
+    const rows = currentAverage();
+    const box = $("#board");
+    if (!rows.length) { box.innerHTML = `<div class="state"><b>Aucun sondage pour cette configuration</b>Choisis une autre configuration ci-dessus.</div>`; $("#avgMeta").textContent = ""; return; }
+    const max = Math.max(40, Math.ceil(rows[0].max / 5) * 5);
+    const cut = rows[1] ? rows[1].mean : 0;
+    box.innerHTML = rows.filter(r => r.mean >= 0.5).map((r, i) => {
+      const p = person(r.k);
+      return `<div class="brow ${i < 2 ? "top2" : ""}">
+        <div class="who"><b>${esc(p.nom)}</b><span>${esc(p.parti)}</span></div>
+        <div class="track"><div class="bar" style="width:${r.mean / max * 100}%;background:${p.color}"></div>
+          <div class="rng" style="left:${r.min / max * 100}%;width:${Math.max(.4, (r.max - r.min) / max * 100)}%"></div>
+          ${i > 1 ? "" : ""}<div class="cut" style="left:${cut / max * 100}%"></div></div>
+        <div class="pct">${fmtPct(r.mean)}</div></div>`;
+    }).join("");
+    const m = rows.meta;
+    $("#avgMeta").textContent = `${m.instituts} instituts · ${new Date(m.from).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} – ${new Date(m.to).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}`;
+  }
+
+  function renderDuels() {
+    const box = $("#duels");
+    const d = SITE.duels;
+    if (!d || !Array.isArray(d.items) || !d.items.length) { box.innerHTML = `<div class="state">Aucun duel enregistré.</div>`; return; }
+    box.innerHTML = d.items.map(x => {
+      const a = person(x.a), b = person(x.b);
+      return `<div class="duel"><div class="names"><span>${esc(a.nom)}</span><span>${esc(b.nom)}</span></div>
+        <div class="split"><i style="width:${x.sa}%;background:${a.color}"></i><i style="width:${x.sb}%;background:${b.color}"></i></div>
+        <div class="vals num"><b>${fmtPct(x.sa, 0)}</b><b>${fmtPct(x.sb, 0)}</b></div>
+        <div class="src">${esc(x.src || "")}${x.n ? ` · ${x.n} sondages ont testé ce duel` : ""}</div></div>`;
+    }).join("");
+  }
+
+  function renderTrend() {
+    const svg = d3.select("#trend"); svg.selectAll("*").remove();
+    const W = 900, H = 360, m = { l: 38, r: 110, t: 14, b: 28 };
+    const pts = [];
+    SITE.polls.filter(p => p.tour !== 2).forEach(p => {
+      const v = pollValues(p); if (!v) return;
+      Object.entries(v).forEach(([k, x]) => { if (!k.startsWith("__") && shown.has(k)) pts.push({ k, d: new Date(p.date), v: x }); });
+    });
+    if (!pts.length) { svg.append("text").attr("x", W / 2).attr("y", H / 2).attr("text-anchor", "middle").text("Aucun sondage à afficher"); return; }
+    const x = d3.scaleTime().domain([new Date("2026-06-01"), new Date(Math.max(TODAY, d3.max(pts, p => p.d)))]).range([m.l, W - m.r]);
+    const ymax = Math.max(40, Math.ceil(d3.max(pts, p => p.v) / 5) * 5);
+    const y = d3.scaleLinear().domain([0, ymax]).range([H - m.b, m.t]);
+    const g = svg.append("g");
+    y.ticks(ymax / 5).forEach(t => {
+      g.append("line").attr("class", "grid").attr("x1", m.l).attr("x2", W - m.r).attr("y1", y(t)).attr("y2", y(t));
+      g.append("text").attr("x", m.l - 6).attr("y", y(t) + 4).attr("text-anchor", "end").text(t);
+    });
+    x.ticks(d3.timeMonth.every(1)).forEach(t => {
+      g.append("text").attr("x", x(t)).attr("y", H - 8).attr("text-anchor", "middle").text(t.toLocaleDateString("fr-FR", { month: "short" }));
+    });
+    const byK = d3.group(pts, p => p.k);
+    const labels = [];
+    byK.forEach((arr, k) => {
+      const col = person(k).color;
+      g.append("g").selectAll("circle").data(arr).join("circle").attr("cx", p => x(p.d)).attr("cy", p => y(p.v)).attr("r", 2.6).attr("fill", col).attr("opacity", .35);
+      // moyenne mobile gaussienne, fenêtre ~21 jours
+      const days = d3.timeDay.range(d3.min(arr, p => p.d), d3.timeDay.offset(d3.max(arr, p => p.d), 1), 2);
+      const line = days.map(day => {
+        let ws = 0, s = 0;
+        arr.forEach(p => { const dd = (p.d - day) / 86400000; if (Math.abs(dd) > 21) return; const w = Math.exp(-(dd * dd) / (2 * 8 * 8)); ws += w; s += w * p.v; });
+        return ws > .4 ? { d: day, v: s / ws } : null;
+      }).filter(Boolean);
+      if (line.length > 1) {
+        g.append("path").attr("d", d3.line().x(p => x(p.d)).y(p => y(p.v)).curve(d3.curveMonotoneX)(line)).attr("fill", "none").attr("stroke", col).attr("stroke-width", 2.4);
+        const end = line[line.length - 1];
+        g.append("circle").attr("cx", x(end.d)).attr("cy", y(end.v)).attr("r", 4).attr("fill", col);
+        labels.push({ k, y: y(end.v), x: x(end.d), v: end.v, col });
+      }
+    });
+    labels.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < labels.length; i++) if (labels[i].y - labels[i - 1].y < 13) labels[i].y = labels[i - 1].y + 13;
+    labels.forEach(l => {
+      g.append("text").attr("x", l.x + 8).attr("y", l.y + 4).attr("fill", l.col).style("fill", l.col).style("font-weight", 600)
+        .text(`${person(l.k).nom.split(" ").slice(-1)[0]} ${l.v.toFixed(1).replace(".", ",")}`);
+    });
+  }
+
+  function renderLegend() {
+    const present = new Set();
+    SITE.polls.forEach(p => (p.hypotheses || []).forEach(h => Object.keys(h).forEach(k => present.add(k === "Bardella" ? "Le Pen" : k))));
+    const keys = MAIN.filter(k => present.has(k)).concat([...present].filter(k => !MAIN.includes(k) && PEOPLE[k]));
+    $("#legend").innerHTML = keys.map(k => `<button type="button" class="chip" data-k="${esc(k)}" aria-pressed="${shown.has(k)}"><i class="dot" style="background:${person(k).color}"></i>${esc(person(k).nom)}</button>`).join("");
+  }
+  $("#legend").addEventListener("click", e => {
+    const b = e.target.closest("[data-k]"); if (!b) return;
+    const k = b.dataset.k; shown.has(k) ? shown.delete(k) : shown.add(k);
+    renderLegend(); renderTrend();
+  });
+
+  function renderTable() {
+    const polls = [...SITE.polls].sort((a, b) => b.date.localeCompare(a.date) || a.institut.localeCompare(b.institut));
+    $("#pollCount").textContent = `${polls.length} sondages · ${polls.reduce((s, p) => s + (p.hypotheses || []).length, 0)} configurations`;
+    if (!polls.length) { $("#pollRows").innerHTML = `<tr><td colspan="5"><div class="state"><b>Pas encore de sondage</b>Les sondages ajoutés apparaîtront ici.</div></td></tr>`; return; }
+    $("#pollRows").innerHTML = polls.map((p, i) => {
+      const h = (p.hypotheses || [])[0] || {};
+      const top = Object.entries(h).sort((a, b) => b[1] - a[1]);
+      const mini = top.map(([k, v]) => `<i style="width:${v}%;background:${person(k).color}"></i>`).join("");
+      const lead = top.slice(0, 3).map(([k, v]) => `${esc(k)} ${String(v).replace(".", ",")}`).join(" · ");
+      return `<tr class="poll" data-i="${i}" tabindex="0" aria-expanded="false"><td class="num">${new Date(p.date).toLocaleDateString("fr-FR")}</td><td><b>${esc(p.institut)}</b>${p.commanditaire ? `<div class="note">pour ${esc(p.commanditaire)}</div>` : ""}${p.tour === 2 ? ' <span class="pill">2nd tour</span>' : ""}</td><td class="num">${p.echantillon ? fmtInt(p.echantillon) : "—"}</td><td class="num">${(p.hypotheses || []).length}</td><td><div class="mini">${mini}</div><span class="note">${lead}</span></td></tr>
+        <tr class="hyprow" hidden><td colspan="5"><div class="hyps">${(p.hypotheses || []).map((hh, j) => `<div class="hyp"><b>Config. ${j + 1}</b>${Object.entries(hh).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span><i class="dot" style="background:${person(k).color}"></i> ${esc(k)} <span class="num">${String(v).replace(".", ",")}</span></span>`).join("")}</div>`).join("")}<div class="note">${p.terrain ? "Terrain : " + esc(p.terrain) + " · " : ""}Source : ${esc(p.source || "—")}. Notice complète déposée auprès de la Commission des sondages.</div></div></td></tr>`;
+    }).join("");
+  }
+  $("#pollRows").addEventListener("click", e => toggleRow(e.target.closest("tr.poll")));
+  $("#pollRows").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleRow(e.target.closest("tr.poll")); } });
+  function toggleRow(tr) { if (!tr) return; const n = tr.nextElementSibling; n.hidden = !n.hidden; tr.setAttribute("aria-expanded", String(!n.hidden)); }
+
+  function renderAll() { renderFilters(); renderBoard(); renderDuels(); renderLegend(); renderTrend(); renderTable(); ticker(); }
+
+  return { renderAll, currentAverage, pollValues, get filter() { return filter; } };
+})();
+
+// ================================================================== SOIRÉE ÉLECTORALE
+const Night = (function () {
+  let started = false, ready = false;
+  let B, N, E, K, CANDS;          // base
+  let codes, names, deps, pops, ins, turn0;
+  let paths, depMesh, proj;       // géométrie
+  let canvas, ctx, pick, pctx, zoomT = d3.zoomIdentity, dpr = 1, W = 0, H = 0, sx = 1, ox = 0, oy = 0;
+  const S = {
+    src: "sim", round: 1, view: "lead",
+    targets: null,            // % visés 1er tour
+    scen: null,               // parts attendues (Float32 n*K) 1er tour
+    truth: [null, null, null],// parts réelles simulées par tour
+    expr: [null, null, null], // exprimés par commune et par tour
+    rep: null, repAt: null, clock: 0, playing: false, revealed: false,
+    finalists: null, matrix: null, sel: -1, estim: null, called: false, events: [],
+    live: [null, null, null], // résultats officiels par tour
+  };
+  const CLOCK0 = 18 * 60, CLOCK1 = 24 * 60 + 30, OPEN20 = 20 * 60;
+
+  function ensure() {
+    if (started) { resize(); return; }
+    started = true;
+    Promise.all([
+      fetch("data/base.json").then(r => r.json()),
+      fetch("data/communes.topo.json").then(r => r.json()),
+      fetch("data/deps.topo.json").then(r => r.json()),
+    ]).then(([base, topo, deptopo]) => init(base, topo, deptopo))
+      .catch(() => { $("#mapLoading").textContent = "Impossible de charger la carte. Recharge la page."; });
+  }
+
+  function init(base, topo, deptopo) {
+    B = base; CANDS = base.cands; K = CANDS.length;
+    const rows = base.communes.concat(base.extra);
+    N = base.communes.length; E = base.extra.length;
+    const n = N + E;
+    codes = rows.map(r => r[0]); names = rows.map(r => r[1]); pops = rows.map(r => r[2]);
+    deps = codes.map(c => c.slice(0, 2));
+    ins = new Float64Array(n); turn0 = new Float32Array(n);
+    const base0 = new Float32Array(n * K);
+    rows.forEach((r, i) => { ins[i] = r[3]; turn0[i] = r[4] / 1000; for (let k = 0; k < K; k++) base0[i * K + k] = Math.max(r[5 + k], 1) / 1000; });
+    S.base0 = base0;
+    const idx = new Map(codes.map((c, i) => [c, i]));
+    // géométrie
+    const geo = topojson.feature(topo, topo.objects.communes);
+    proj = d3.geoConicConformal().parallels([44, 49]).rotate([-3, 0]).fitSize([1000, 1000], geo);
+    const path = d3.geoPath(proj);
+    paths = new Array(N);
+    geo.features.forEach(f => { const i = idx.get(f.properties.c); if (i != null && i < N) paths[i] = new Path2D(path(f) || ""); });
+    depMesh = new Path2D(path(topojson.mesh(deptopo, deptopo.objects.communes, (a, b) => a !== b)) || "");
+    const outline = new Path2D(path(topojson.merge(deptopo, deptopo.objects.communes.geometries)) || "");
+    S.outline = outline;
+    canvas = $("#map"); ctx = canvas.getContext("2d");
+    pick = document.createElement("canvas"); pctx = pick.getContext("2d", { willReadFrequently: true });
+    $("#mapLoading").hidden = true;
+    ready = true;
+    // sélecteur de vue
+    renderViewSel();
+    syncFromPolls();
+    bindMap();
+    resize();
+    new ResizeObserver(() => resize()).observe($("#host"));
+    renderExtras();
+  }
+
+  // ---- scénario : moyenne des sondages -> cibles
+  function syncFromPolls() {
+    if (!ready) return;
+    const avg = Polls.currentAverage();
+    const t = CANDS.map(c => {
+      const key = Object.keys(PEOPLE).find(k => PEOPLE[k].id === c.id);
+      const r = avg.find(a => a.k === key);
+      return r ? r.mean : (c.id === "autres" ? null : 0);
+    });
+    const known = t.reduce((s, x) => s + (x || 0), 0);
+    const ia = CANDS.findIndex(c => c.id === "autres");
+    t[ia] = Math.max(0.5, 100 - known);
+    S.targets = normalize(t);
+    applyScenario(); renderScen();
+  }
+  function normalize(t) { const s = t.reduce((a, b) => a + b, 0) || 1; return t.map(x => x / s * 100); }
+  // calage des parts communales sur les cibles nationales (raking)
+  function rake(src, target, w, iters = 12) {
+    const n = N + E, out = new Float32Array(src.length), adj = new Float64Array(K).fill(1);
+    for (let it = 0; it < iters; it++) {
+      const tot = new Float64Array(K); let T = 0;
+      for (let i = 0; i < n; i++) {
+        let s = 0; for (let k = 0; k < K; k++) s += src[i * K + k] * adj[k];
+        if (!s) continue;
+        const wi = w[i]; T += wi;
+        for (let k = 0; k < K; k++) tot[k] += wi * src[i * K + k] * adj[k] / s;
+      }
+      for (let k = 0; k < K; k++) { const cur = tot[k] / T * 100; if (target[k] > 0 && cur > 0) adj[k] *= target[k] / cur; else if (target[k] <= 0) adj[k] = 0; }
+    }
+    for (let i = 0; i < n; i++) {
+      let s = 0; for (let k = 0; k < K; k++) s += src[i * K + k] * adj[k];
+      for (let k = 0; k < K; k++) out[i * K + k] = s ? src[i * K + k] * adj[k] / s : 0;
+    }
+    return out;
+  }
+  function weights1() { const n = N + E, w = new Float64Array(n); for (let i = 0; i < n; i++) w[i] = ins[i] * turn0[i] * 0.975; return w; }
+  function applyScenario() {
+    S.scen = rake(S.base0, S.targets, weights1());
+    resetNight(true);
+  }
+
+  // ---- second tour
+  const BLOC = { lepen: "ED", zemmour: "ED", nda: "ED", retailleau: "D", philippe: "C", glucksmann: "G", melenchon: "G", tondelier: "G", roussel: "G", arthaud: "G", autres: "X" };
+  const AFF = { ED: { ED: .85, D: .55, C: .25, G: .08, X: .3 }, D: { ED: .45, D: .9, C: .6, G: .12, X: .3 }, C: { ED: .18, D: .55, C: .9, G: .45, X: .3 }, G: { ED: .08, D: .12, C: .4, G: .88, X: .3 }, X: { ED: .3, D: .3, C: .3, G: .3, X: .3 } };
+  function defaultMatrix(a, b) {
+    return CANDS.map((c, k) => {
+      if (k === a) return [97, 0]; if (k === b) return [0, 97];
+      const v = BLOC[c.id] || "X", fa = AFF[v][BLOC[CANDS[a].id] || "X"], fb = AFF[v][BLOC[CANDS[b].id] || "X"];
+      const go = Math.min(.92, .25 + .7 * Math.max(fa, fb));
+      return [Math.round(go * fa / (fa + fb) * 100), Math.round(go * fb / (fa + fb) * 100)];
+    });
+  }
+  function round1Source() { return S.truth[1] && S.rep && S.round === 2 ? S.truth[1] : (S.live[1] ? S.live[1].shares : S.scen); }
+  function national(shares, expr, onlyRep) {
+    const tot = new Float64Array(K); let T = 0, I = 0, V = 0;
+    const n = N + E;
+    for (let i = 0; i < n; i++) {
+      if (onlyRep && !onlyRep[i]) continue;
+      const e = expr[i]; T += e; I += ins[i];
+      for (let k = 0; k < K; k++) tot[k] += e * shares[i * K + k];
+    }
+    return { pct: Array.from(tot, x => T ? x / T * 100 : 0), votes: Array.from(tot), expr: T, ins: I };
+  }
+  function pickFinalists() {
+    const src = S.truth[1] || S.scen;
+    const ex = S.expr[1] || exprFrom(turn0);
+    const nat = national(src, ex).pct;
+    const ord = nat.map((v, k) => [v, k]).sort((x, y) => y[0] - x[0]).map(x => x[1]);
+    return [ord[0], ord[1]];
+  }
+  function exprFrom(t) { const n = N + E, e = new Float64Array(n); for (let i = 0; i < n; i++) e[i] = ins[i] * t[i] * 0.975; return e; }
+  function round2From(src1, expr1) {
+    const [a, b] = S.finalists, M = S.matrix, n = N + E;
+    const sh = new Float32Array(n * K), ex = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      let va = 0, vb = 0;
+      for (let k = 0; k < K; k++) { const v = src1[i * K + k]; va += v * M[k][0] / 100; vb += v * M[k][1] / 100; }
+      const s = va + vb || 1;
+      sh[i * K + a] = va / s; sh[i * K + b] = vb / s;
+      ex[i] = expr1[i] * s * 1.02; // léger regain de participation au 2nd tour
+    }
+    return { sh, ex };
+  }
+
+  // ---- simulation
+  const rnd = (() => { let s = 1; return { seed(v) { s = v >>> 0 || 1; }, next() { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return (s >>> 0) / 4294967296; }, gauss() { const u = 1 - this.next(), v = this.next(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); } }; })();
+  function buildTruth() {
+    const n = N + E;
+    rnd.seed(Date.now() % 1e9);
+    if (S.round === 1) {
+      const err = CANDS.map(() => rnd.gauss() * 0.06);   // erreur de sondage (~1,5 pt pour 25 %)
+      const target = normalize(S.targets.map((t, k) => t * Math.exp(err[k])));
+      const noisy = new Float32Array(n * K);
+      for (let i = 0; i < n; i++) {
+        const sc = 0.04 + 0.18 / Math.sqrt(Math.max(pops[i], 50) / 50);
+        let s = 0;
+        for (let k = 0; k < K; k++) { const v = S.scen[i * K + k] * Math.exp(rnd.gauss() * sc); noisy[i * K + k] = v; s += v; }
+        for (let k = 0; k < K; k++) noisy[i * K + k] /= s;
+      }
+      S.truth[1] = rake(noisy, target, weights1(), 6);
+      const t = new Float32Array(n); for (let i = 0; i < n; i++) t[i] = Math.min(.93, Math.max(.35, turn0[i] + rnd.gauss() * .015 + (err[0] * .1)));
+      S.expr[1] = exprFrom(t);
+    } else {
+      const src = S.truth[1] || S.scen, ex1 = S.expr[1] || exprFrom(turn0);
+      const r = round2From(src, ex1);
+      const sw = rnd.gauss() * 0.04;
+      const [a, b] = S.finalists;
+      for (let i = 0; i < n; i++) {
+        const loc = rnd.gauss() * (0.03 + 0.12 / Math.sqrt(Math.max(pops[i], 50) / 50));
+        let va = r.sh[i * K + a] * Math.exp(sw + loc), vb = r.sh[i * K + b];
+        const s = va + vb; r.sh[i * K + a] = va / s; r.sh[i * K + b] = vb / s;
+      }
+      S.truth[2] = r.sh; S.expr[2] = r.ex;
+    }
+    // heure de remontée : petites communes d'abord, grandes villes en fin de soirée
+    S.repAt = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const p = pops[i];
+      let t;
+      if (i >= N) t = codes[i] === "ZZ" ? 21 * 60 + rnd.next() * 120 : 19 * 60 + 30 + rnd.next() * 60;
+      else {
+        const close = p > 15000 ? 20 * 60 : 19 * 60;
+        const lag = 12 + 18 * Math.log10(Math.max(p, 30)) * (0.6 + rnd.next() * .9) + (p > 100000 ? 70 + rnd.next() * 90 : 0);
+        t = close + lag;
+      }
+      S.repAt[i] = Math.min(CLOCK1 - 5, t);
+    }
+  }
+  function resetNight(silent) {
+    S.playing = false; S.clock = CLOCK0; S.revealed = false; S.estim = null; S.called = false; S.events = [];
+    S.rep = new Uint8Array(N + E);
+    S.truth[S.round] = null;
+    if (S.round === 2) {
+      if (!S.finalists) { S.finalists = pickFinalists(); S.matrix = defaultMatrix(...S.finalists); }
+      renderMatrix();
+    }
+    $("#play").textContent = "▶ Lancer la soirée"; $("#play").disabled = false;
+    if (!silent) feed("Simulation remise à zéro.");
+    renderAllNight();
+  }
+  let raf = 0, lastTs = 0, lastDraw = 0;
+  function play() {
+    if (S.src !== "sim") return;
+    if (S.playing) { S.playing = false; $("#play").textContent = "▶ Reprendre"; return; }
+    if (!S.truth[S.round]) buildTruth();
+    if (S.clock >= CLOCK1) { resetNight(true); buildTruth(); }
+    S.playing = true; $("#play").textContent = "❚❚ Pause"; lastTs = 0;
+    if (S.clock === CLOCK0) feed(S.round === 1 ? "8 h : ouverture des bureaux de vote. Fermeture à 19 h, 20 h dans les grandes villes." : "Second tour : les bureaux ouvrent.");
+    cancelAnimationFrame(raf); raf = requestAnimationFrame(tick);
+  }
+  function tick(ts) {
+    if (!S.playing) return;
+    if (!lastTs) lastTs = ts;
+    const dur = parseInt($("#speed").value) * 1000;
+    S.clock = Math.min(CLOCK1, S.clock + (ts - lastTs) / dur * (CLOCK1 - CLOCK0));
+    lastTs = ts;
+    advance();
+    if (ts - lastDraw > 180 || S.clock >= CLOCK1) { lastDraw = ts; renderAllNight(); }
+    if (S.clock >= CLOCK1) { S.playing = false; $("#play").textContent = "↻ Rejouer"; feed("Dépouillement terminé."); renderAllNight(); return; }
+    raf = requestAnimationFrame(tick);
+  }
+  function advance() {
+    const n = N + E;
+    for (let i = 0; i < n; i++) if (!S.rep[i] && S.repAt[i] <= S.clock) {
+      S.rep[i] = 1;
+      if (S.revealed && (pops[i] > 120000 || i >= N)) {
+        const sh = S.truth[S.round], top = topK(sh, i);
+        feed(`${names[i]} : ${CANDS[top].nom} en tête (${fmtPct(sh[i * K + top] * 100)}).`);
+      }
+    }
+    if (!S.revealed && S.clock >= OPEN20) {
+      S.revealed = true;
+      const nat = national(S.truth[S.round], S.expr[S.round]).pct;
+      S.estim = nat.map(v => Math.max(0, v + rnd.gauss() * 0.7));
+      const s = S.estim.reduce((a, b) => a + b, 0); S.estim = S.estim.map(v => v / s * 100);
+      const ord = S.estim.map((v, k) => [v, k]).sort((a, b) => b[0] - a[0]);
+      feed(S.round === 1 ? `20 h : estimation. ${CANDS[ord[0][1]].nom} (${fmtPct(ord[0][0])}) et ${CANDS[ord[1][1]].nom} (${fmtPct(ord[1][0])}) arrivent en tête.` : `20 h : estimation. ${CANDS[ord[0][1]].nom} élu(e) avec ${fmtPct(ord[0][0])}.`);
+    }
+    if (S.revealed && !S.called) {
+      const repN = S.rep.reduce((a, b) => a + b, 0);
+      if (repN / (N + E) > .6) { S.called = true; feed(S.round === 1 ? "Les qualifiés pour le second tour sont confirmés par les résultats." : "Le résultat est acquis."); }
+    }
+  }
+  function topK(sh, i) { let b = 0; for (let k = 1; k < K; k++) if (sh[i * K + k] > sh[i * K + b]) b = k; return b; }
+  function feed(txt) {
+    const h = Math.floor(S.clock / 60) % 24, m = Math.floor(S.clock % 60);
+    S.events.unshift({ t: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`, txt });
+    S.events = S.events.slice(0, 60);
+    renderFeed();
+  }
+
+  // ---- données affichées (simulation ou officiel)
+  function current() {
+    if (S.src === "live") {
+      const L = S.live[S.round];
+      if (!L) return null;
+      return { shares: L.shares, expr: L.expr, rep: L.rep, revealed: true, ins: L.ins };
+    }
+    const sh = S.truth[S.round] || (S.round === 1 ? S.scen : null);
+    if (!sh) return null;
+    return { shares: sh, expr: S.expr[S.round] || exprFrom(turn0), rep: S.rep, revealed: S.revealed };
+  }
+
+  // ---- carte
+  let ramps = {};
+  function themeColor(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function mix(c1, c2, t) {
+    const p = h => [1, 3, 5].map(j => parseInt(h.slice(j, j + 2), 16));
+    const a = p(c1), b = p(c2);
+    return "rgb(" + a.map((v, j) => Math.round(v + (b[j] - v) * t)).join(",") + ")";
+  }
+  function buildRamps() {
+    const bg = toHex(themeColor("--map-empty")) || "#e3e6eb";
+    ramps = {};
+    CANDS.forEach(c => { ramps[c.id] = Array.from({ length: 12 }, (_, j) => mix(bg, c.color, .25 + .75 * j / 11)); });
+    ramps.__turn = Array.from({ length: 12 }, (_, j) => mix(bg, "#1f6f8b", .15 + .85 * j / 11));
+  }
+  function toHex(c) {
+    if (!c) return null; if (c[0] === "#") return c.length === 4 ? "#" + [...c.slice(1)].map(x => x + x).join("") : c;
+    const m = c.match(/\d+/g); if (!m) return null; return "#" + m.slice(0, 3).map(v => (+v).toString(16).padStart(2, "0")).join("");
+  }
+  function renderViewSel() {
+    const opts = [["lead", "Candidat en tête"], ["turn", "Participation"]].concat(CANDS.filter(c => c.id !== "autres").map(c => ["c:" + c.id, "Score de " + c.nom]));
+    $("#viewSel").innerHTML = opts.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join("");
+  }
+  function resize() {
+    if (!ready) return;
+    const host = $("#host"), r = host.getBoundingClientRect();
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = r.width; H = r.height;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    pick.width = Math.round(W); pick.height = Math.round(H);
+    sx = Math.min(W, H) / 1000; ox = (W - 1000 * sx) / 2; oy = (H - 1000 * sx) / 2;
+    buildRamps(); draw(); drawPick();
+  }
+  function fillFor(i, cur) {
+    if (!cur || !cur.rep[i] || !cur.revealed) return null;
+    const sh = cur.shares;
+    if (S.view === "turn") {
+      const t = cur.expr[i] / 0.975 / ins[i]; return ramps.__turn[Math.max(0, Math.min(11, Math.round((t - .5) / .4 * 11)))];
+    }
+    if (S.view.startsWith("c:")) {
+      const k = CANDS.findIndex(c => c.id === S.view.slice(2)); const v = sh[i * K + k];
+      return ramps[CANDS[k].id][Math.max(0, Math.min(11, Math.round(v / .5 * 11)))];
+    }
+    const k = topK(sh, i); const v = sh[i * K + k];
+    return ramps[CANDS[k].id][Math.max(0, Math.min(11, Math.round((v - .2) / .4 * 11)))];
+  }
+  function draw() {
+    if (!ready) return;
+    const cur = current();
+    const empty = themeColor("--map-empty");
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const k = zoomT.k * sx;
+    ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * (zoomT.k * ox + zoomT.x), dpr * (zoomT.k * oy + zoomT.y));
+    ctx.fillStyle = empty; ctx.fill(S.outline);
+    for (let i = 0; i < N; i++) { const f = fillFor(i, cur); if (!f || !paths[i]) continue; ctx.fillStyle = f; ctx.fill(paths[i]); }
+    if (zoomT.k > 5) { ctx.strokeStyle = themeColor("--map-line"); ctx.lineWidth = .5 / k; for (let i = 0; i < N; i++) if (paths[i]) ctx.stroke(paths[i]); }
+    ctx.strokeStyle = themeColor("--map-line"); ctx.lineWidth = 1.1 / k; ctx.stroke(depMesh);
+    ctx.strokeStyle = themeColor("--muted"); ctx.lineWidth = .8 / k; ctx.stroke(S.outline);
+    if (S.sel >= 0 && S.sel < N && paths[S.sel]) { ctx.strokeStyle = themeColor("--ink"); ctx.lineWidth = 2 / k; ctx.stroke(paths[S.sel]); }
+  }
+  function drawPick() {
+    if (!ready) return;
+    pctx.setTransform(1, 0, 0, 1, 0, 0); pctx.clearRect(0, 0, pick.width, pick.height);
+    const k = zoomT.k * sx;
+    pctx.setTransform(k, 0, 0, k, zoomT.k * ox + zoomT.x, zoomT.k * oy + zoomT.y);
+    for (let i = 0; i < N; i++) { if (!paths[i]) continue; const id = i + 1; pctx.fillStyle = `rgb(${id >> 16 & 255},${id >> 8 & 255},${id & 255})`; pctx.fill(paths[i]); }
+  }
+  function hit(x, y) {
+    const d = pctx.getImageData(Math.round(x), Math.round(y), 1, 1).data;
+    if (d[3] < 255) return -1;
+    const id = (d[0] << 16 | d[1] << 8 | d[2]) - 1;
+    return id >= 0 && id < N ? id : -1;
+  }
+  let pickTimer = 0, drawPending = false;
+  function requestDraw() { if (drawPending) return; drawPending = true; requestAnimationFrame(() => { drawPending = false; draw(); }); }
+  function bindMap() {
+    const z = d3.zoom().scaleExtent([1, 80]).on("zoom", e => {
+      zoomT = e.transform; $("#tip").hidden = true; requestDraw();
+      clearTimeout(pickTimer); pickTimer = setTimeout(drawPick, 160);
+    });
+    S.zoom = z;
+    d3.select(canvas).call(z);
+    canvas.addEventListener("mousemove", e => {
+      const r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      const i = hit(x, y); showTip(i, x, y);
+    });
+    canvas.addEventListener("mouseleave", () => { $("#tip").hidden = true; });
+    canvas.addEventListener("click", e => {
+      const r = canvas.getBoundingClientRect(); const i = hit(e.clientX - r.left, e.clientY - r.top);
+      select(i);
+    });
+  }
+  function shareRows(i, cur, n = 4) {
+    const sh = cur.shares;
+    return CANDS.map((c, k) => [k, sh[i * K + k]]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, n);
+  }
+  function showTip(i, x, y) {
+    const tip = $("#tip");
+    if (i < 0) { tip.hidden = true; return; }
+    const cur = current();
+    let body = "";
+    if (cur && cur.rep[i] && cur.revealed) {
+      body = shareRows(i, cur).map(([k, v]) => `<div class="r"><i class="dot" style="background:${CANDS[k].color}"></i><span>${esc(CANDS[k].nom)}</span><b class="num">${fmtPct(v * 100)}</b></div>`).join("");
+    } else body = `<div class="note">${cur && cur.rep[i] ? "Dépouillée, publication à 20 h" : "Pas encore de résultat"}</div>`;
+    tip.innerHTML = `<h4>${esc(names[i])}</h4><div class="note" style="margin-bottom:6px">${esc(deps[i])} · ${fmtInt(pops[i])} hab.</div>${body}`;
+    tip.hidden = false;
+    const hw = $("#host").clientWidth;
+    tip.style.left = Math.min(x + 14, hw - 230) + "px"; tip.style.top = (y + 14) + "px";
+  }
+  function select(i) {
+    S.sel = i; draw();
+    const box = $("#detail");
+    if (i < 0) { box.hidden = true; return; }
+    const cur = current();
+    const visible = cur && cur.rep[i] && cur.revealed;
+    const rows = visible ? CANDS.map((c, k) => [k, cur.shares[i * K + k]]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]) : [];
+    const part = visible ? cur.expr[i] / 0.975 / ins[i] : null;
+    box.innerHTML = `<div class="sec-h"><div><div class="eyebrow">Commune · ${esc(deps[i])}</div><h3>${esc(names[i])}</h3></div><button class="btn ghost" type="button" id="closeDetail">Fermer</button></div>
+      <div class="note">${fmtInt(pops[i])} habitants · ${fmtInt(ins[i])} inscrits${part ? " · participation " + fmtPct(part * 100) : ""}</div>
+      ${visible ? `<div class="board" style="margin-top:10px">${rows.map(([k, v]) => `<div class="brow"><div class="who"><b>${esc(CANDS[k].nom)}</b><span>${fmtInt(v * cur.expr[i])} voix</span></div><div class="track"><div class="bar" style="width:${v * 100}%;background:${CANDS[k].color}"></div></div><div class="pct">${fmtPct(v * 100)}</div></div>`).join("")}</div>` : `<p class="note">Pas encore de résultat pour cette commune.</p>`}`;
+    box.hidden = false;
+    $("#closeDetail").onclick = () => select(-1);
+  }
+  function zoomTo(i) {
+    if (!paths[i]) return;
+    // centre de la commune dans le repère 1000x1000
+    const b = boundsOf(i);
+    const cx = (b[0] + b[2]) / 2 * sx + ox, cy = (b[1] + b[3]) / 2 * sx + oy;
+    const k = 14;
+    const t = d3.zoomIdentity.translate(W / 2 - k * cx, H / 2 - k * cy).scale(k);
+    d3.select(canvas).transition().duration(600).call(S.zoom.transform, t);
+    select(i);
+  }
+  let geoBounds = null;
+  function boundsOf(i) {
+    // calculé à la demande à partir du centroïde projeté
+    if (!geoBounds) geoBounds = new Map();
+    if (geoBounds.has(i)) return geoBounds.get(i);
+    // approximation : on balaie le pick canvas n'est pas fiable hors champ ; on utilise la projection du code INSEE via fetch déjà chargé
+    const b = S.cent && S.cent[i] ? [S.cent[i][0], S.cent[i][1], S.cent[i][0], S.cent[i][1]] : [500, 500, 500, 500];
+    geoBounds.set(i, b); return b;
+  }
+
+  // ---- panneaux
+  function renderAllNight() {
+    if (!ready) return;
+    draw();
+    const cur = current();
+    const n = N + E;
+    // horloge
+    const live = S.src === "live";
+    if (live) {
+      $("#clk").textContent = cur ? "Officiel" : "—";
+      $("#clkNote").textContent = cur ? `mis à jour ${S.liveStamp || ""}` : "En attente des premiers résultats (20 h le 18 avril 2027)";
+    } else {
+      const h = Math.floor(S.clock / 60) % 24, m = Math.floor(S.clock % 60);
+      $("#clk").textContent = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      $("#clkNote").textContent = S.clock < 19 * 60 ? "Bureaux ouverts" : S.clock < OPEN20 ? "Dépouillement en cours" : S.clock >= CLOCK1 ? "Fin du dépouillement" : "Résultats en cours";
+    }
+    $("#embargo").hidden = live || !(S.clock >= 19 * 60 && S.clock < OPEN20);
+    const repArr = cur ? cur.rep : new Uint8Array(n);
+    let repN = 0, repMetro = 0; for (let i = 0; i < n; i++) if (repArr[i]) { repN++; if (i < N) repMetro++; }
+    $("#sCom").textContent = `${fmtInt(repMetro)} / ${fmtInt(N)}`;
+    $("#prog").style.width = (repN / n * 100) + "%";
+    const nat = cur && (cur.revealed) && repN ? national(cur.shares, cur.expr, repArr) : null;
+    $("#sPart").textContent = nat ? fmtPct(nat.expr / 0.975 / nat.ins * 100) : "—";
+    $("#sExp").textContent = nat ? fmtInt(nat.expr) : "—";
+    // estimation 20 h
+    const est = $("#estim");
+    if (!live && S.estim) {
+      const ord = S.estim.map((v, k) => [v, k]).sort((a, b) => b[0] - a[0]);
+      est.hidden = false;
+      est.innerHTML = S.round === 1
+        ? `<div class="k">Estimation 20 h 00</div><h3>${esc(CANDS[ord[0][1]].nom)} et ${esc(CANDS[ord[1][1]].nom)} au second tour</h3><div class="note">${ord.slice(0, 4).map(([v, k]) => `${esc(CANDS[k].nom.split(" ").slice(-1)[0])} ${fmtPct(v)}`).join(" · ")}</div>`
+        : `<div class="k">Estimation 20 h 00</div><h3>${esc(CANDS[ord[0][1]].nom)} élu(e) président(e) de la République</h3><div class="note">${fmtPct(ord[0][0])} contre ${fmtPct(ord[1][0])}</div>`;
+    } else est.hidden = true;
+    // tableau national
+    $("#resTitle").textContent = S.round === 1 ? "Résultats nationaux" : "Second tour";
+    let rows, note;
+    if (nat) { rows = nat.pct.map((v, k) => ({ k, v, votes: nat.votes[k] })); note = `sur ${fmtPct(repN / n * 100, 0)} des communes`; }
+    else if (!live && S.round === 1) { rows = S.targets.map((v, k) => ({ k, v })); note = "moyenne des sondages"; }
+    else if (!live && S.round === 2 && S.finalists) { const r = round2From(S.truth[1] || S.scen, S.expr[1] || exprFrom(turn0)); const p = national(r.sh, r.ex).pct; rows = p.map((v, k) => ({ k, v })); note = "projection selon les reports"; }
+    else { rows = []; note = ""; }
+    rows = rows.filter(r => r.v > 0.05).sort((a, b) => b.v - a.v);
+    $("#resNote").textContent = note;
+    const max = Math.max(40, rows.length ? Math.ceil(rows[0].v / 10) * 10 : 40);
+    $("#natBoard").innerHTML = rows.length ? rows.map((r, j) => `<div class="brow ${S.round === 1 && j < 2 && (S.called || live) ? "top2" : ""}"><div class="who"><b>${esc(CANDS[r.k].nom)}</b><span>${r.votes ? fmtInt(r.votes) + " voix" : esc(CANDS[r.k].parti)}</span></div><div class="track"><div class="bar" style="width:${r.v / max * 100}%;background:${CANDS[r.k].color}"></div>${S.round === 2 ? '<div class="cut" style="left:' + (50 / max * 100) + '%"></div>' : ""}</div><div class="pct">${fmtPct(r.v)}</div></div>`).join("")
+      : `<div class="state"><b>Pas encore de résultat</b>${live ? "Les résultats officiels s'afficheront ici dès leur publication." : ""}</div>`;
+    renderExtras();
+    if (S.sel >= 0 && !S.playing) select(S.sel);
+  }
+  function renderFeed() {
+    $("#feed").innerHTML = S.events.length ? S.events.map(e => `<div><span>${e.t}</span>${esc(e.txt)}</div>`).join("") : `<div><span>—</span>Lance la soirée pour suivre le dépouillement.</div>`;
+  }
+  function renderExtras() {
+    if (!ready) return;
+    const cur = current();
+    $("#extras").innerHTML = codes.slice(N).map((c, j) => {
+      const i = N + j;
+      let r = "en attente";
+      if (cur && cur.rep[i] && cur.revealed) { const k = topK(cur.shares, i); r = `<span><i class="dot" style="background:${CANDS[k].color}"></i> ${esc(CANDS[k].nom.split(" ").slice(-1)[0])} ${fmtPct(cur.shares[i * K + k] * 100)}</span>`; }
+      return `<div><span>${esc(names[i])}</span><span class="note">${r}</span></div>`;
+    }).join("");
+  }
+  function renderScen() {
+    $("#scen").innerHTML = CANDS.map((c, k) => `<label><i class="dot" style="background:${c.color}"></i><span>${esc(c.nom)}</span><input type="number" step="0.1" min="0" max="80" id="sc-${c.id}" value="${S.targets[k].toFixed(1)}"></label>`).join("");
+  }
+  $("#scen").addEventListener("change", () => {
+    const t = CANDS.map(c => Math.max(0, parseFloat(($("#sc-" + c.id).value || "0").replace(",", ".")) || 0));
+    S.targets = normalize(t); S.finalists = null; applyScenario(); renderScen();
+  });
+  $("#scenReset").addEventListener("click", () => { S.finalists = null; syncFromPolls(); });
+  function renderMatrix() {
+    if (!S.finalists) return;
+    const [a, b] = S.finalists;
+    $("#matrix").innerHTML = `<table><thead><tr><th>Électeurs de</th><th>→ ${esc(CANDS[a].nom.split(" ").slice(-1)[0])}</th><th>→ ${esc(CANDS[b].nom.split(" ").slice(-1)[0])}</th></tr></thead><tbody>${CANDS.map((c, k) => `<tr><td><i class="dot" style="background:${c.color}"></i> ${esc(c.nom)}</td><td><input type="number" min="0" max="100" data-k="${k}" data-j="0" value="${S.matrix[k][0]}" aria-label="Report de ${esc(c.nom)} vers ${esc(CANDS[a].nom)}"></td><td><input type="number" min="0" max="100" data-k="${k}" data-j="1" value="${S.matrix[k][1]}" aria-label="Report de ${esc(c.nom)} vers ${esc(CANDS[b].nom)}"></td></tr>`).join("")}</tbody></table>
+      <p class="note">Finalistes : ${esc(CANDS[a].nom)} et ${esc(CANDS[b].nom)}, d'après ${S.truth[1] ? "le 1er tour simulé" : "la moyenne des sondages"}.</p>`;
+  }
+  $("#matrix").addEventListener("change", e => {
+    const inp = e.target.closest("input[data-k]"); if (!inp) return;
+    const k = +inp.dataset.k, j = +inp.dataset.j;
+    let v = Math.max(0, Math.min(100, parseFloat(inp.value) || 0));
+    S.matrix[k][j] = v; if (S.matrix[k][0] + S.matrix[k][1] > 100) S.matrix[k][1 - j] = 100 - v;
+    renderMatrix(); resetNight(true);
+  });
+
+  // ---- recherche
+  $("#q").addEventListener("input", () => {
+    const ul = $("#qList"), v = $("#q").value.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    if (!ready || v.length < 2) { ul.hidden = true; return; }
+    const res = [];
+    for (let i = 0; i < N && res.length < 60; i++) {
+      const nm = names[i].toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+      if (nm.startsWith(v) || (v.length > 3 && nm.includes(v))) res.push(i);
+    }
+    res.sort((a, b) => pops[b] - pops[a]);
+    ul.innerHTML = res.slice(0, 8).map(i => `<li><button type="button" data-i="${i}">${esc(names[i])} <span class="note">(${deps[i]})</span></button></li>`).join("") || `<li class="note" style="padding:6px 8px">Aucune commune trouvée</li>`;
+    ul.hidden = false;
+  });
+  $("#qList").addEventListener("click", e => { const b = e.target.closest("[data-i]"); if (!b) return; $("#qList").hidden = true; $("#q").value = names[+b.dataset.i]; zoomTo(+b.dataset.i); });
+  document.addEventListener("click", e => { if (!e.target.closest(".search")) $("#qList").hidden = true; });
+
+  // ---- commandes
+  $("#play").addEventListener("click", play);
+  $("#skip").addEventListener("click", () => {
+    if (S.src !== "sim") return;
+    if (!S.truth[S.round]) buildTruth();
+    S.clock = CLOCK1 - 0.01; advance(); S.clock = CLOCK1; S.rep.fill(1); S.revealed = true; S.called = true; S.playing = false;
+    $("#play").textContent = "↻ Rejouer"; renderAllNight();
+  });
+  $("#reset").addEventListener("click", () => resetNight(false));
+  $("#viewSel").addEventListener("change", e => { S.view = e.target.value; draw(); });
+  function setRound(r) {
+    S.round = r; $("#r1").setAttribute("aria-pressed", r === 1); $("#r2").setAttribute("aria-pressed", r === 2);
+    $("#matBox").hidden = r !== 2 || S.src === "live"; $("#scenBox").hidden = r !== 1 || S.src === "live";
+    if (r === 2 && S.src === "sim") { S.finalists = pickFinalists(); S.matrix = defaultMatrix(...S.finalists); }
+    if (r === 1) S.view = $("#viewSel").value;
+    resetNight(true);
+  }
+  $("#r1").addEventListener("click", () => setRound(1));
+  $("#r2").addEventListener("click", () => setRound(2));
+  function setSrc(s) {
+    S.src = s; $("#srcSim").setAttribute("aria-pressed", s === "sim"); $("#srcLive").setAttribute("aria-pressed", s === "live");
+    ["#play", "#skip", "#reset", "#speed"].forEach(q => { $(q).disabled = s === "live"; });
+    $("#nightEyebrow").textContent = s === "sim" ? "Simulation · communes de France métropolitaine" : "Résultats officiels · ministère de l'Intérieur";
+    $("#scenBox").hidden = s === "live" || S.round !== 1; $("#matBox").hidden = s === "live" || S.round !== 2;
+    S.playing = false;
+    renderAllNight();
+  }
+  $("#srcSim").addEventListener("click", () => setSrc("sim"));
+  $("#srcLive").addEventListener("click", () => setSrc("live"));
+
+  // ---- résultats officiels depuis la base partagée
+  // document resultats/t{tour}_{dep} : { communes: { codeINSEE: [inscrits, votants, exprimes, {idCandidat: voix}] } }
+  function setLive(round, docs, stamp) {
+    if (!ready) { S.pendingLive = [round, docs, stamp]; return; }
+    const n = N + E, sh = new Float32Array(n * K), ex = new Float64Array(n), rep = new Uint8Array(n), insL = Float64Array.from(ins);
+    const idx = new Map(codes.map((c, i) => [c, i]));
+    const kOf = new Map(CANDS.map((c, k) => [c.id, k]));
+    docs.forEach(d => {
+      const cm = d.communes || {};
+      Object.entries(cm).forEach(([code, v]) => {
+        const i = idx.get(code); if (i == null || !Array.isArray(v)) return;
+        const [I, , X, voix] = v; if (!X) return;
+        let s = 0; Object.entries(voix || {}).forEach(([id, n2]) => { const k = kOf.has(id) ? kOf.get(id) : kOf.get("autres"); sh[i * K + k] += n2; s += n2; });
+        if (!s) return;
+        for (let k = 0; k < K; k++) sh[i * K + k] /= s;
+        ex[i] = X; insL[i] = I || ins[i]; rep[i] = 1;
+      });
+    });
+    S.live[round] = rep.some(Boolean) ? { shares: sh, expr: ex, rep, ins: insL } : null;
+    S.liveStamp = stamp;
+    if (S.src === "live" && S.round === round) renderAllNight();
+  }
+  function goLive() { setSrc("live"); }
+
+  // centroïdes pour le zoom de recherche (calculés une fois la carte prête)
+  const _init = init;
+  init = function (base, topo, deptopo) {
+    _init(base, topo, deptopo);
+    const geo = topojson.feature(topo, topo.objects.communes);
+    const pth = d3.geoPath(proj), idx = new Map(codes.map((c, i) => [c, i]));
+    S.cent = new Array(N);
+    geo.features.forEach(f => { const i = idx.get(f.properties.c); if (i != null && i < N) S.cent[i] = pth.centroid(f); });
+    if (S.pendingLive) { setLive(...S.pendingLive); S.pendingLive = null; }
+    if (SITE.phase === "resultats") goLive();
+  };
+
+  // thème
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  const onTheme = () => { if (ready) { buildRamps(); draw(); } };
+  mq.addEventListener && mq.addEventListener("change", onTheme);
+  new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  return { ensure, syncFromPolls, setLive, goLive };
+})();
+
+// ================================================================== CALENDRIER
+function renderCal() {
+  const items = [
+    { when: "18 avr. 2027", sub: "2nd tour 2 mai", d: T1, t: "Élection présidentielle", p: "Sondages, soirée électorale à la commune, second tour avec reports de voix.", st: "live" },
+    { when: "Mars 2028", sub: "précédent : juin 2021", d: new Date("2028-03-15"), t: "Élections départementales", p: "Carte par canton (2 054 cantons), binômes élus au scrutin majoritaire à deux tours." },
+    { when: "Mars 2028", sub: "précédent : juin 2021", d: new Date("2028-03-15"), t: "Élections régionales", p: "Listes par région et sections départementales, prime majoritaire au second tour." },
+    { when: "2029", sub: "précédent : juin 2024", d: new Date("2029-06-01"), t: "Élections européennes", p: "Liste nationale unique à la proportionnelle, seuil de 5 %. Carte à la commune comme pour la présidentielle." },
+    { when: "2029", sub: "sauf dissolution", d: new Date("2029-06-15"), t: "Élections législatives", p: "577 circonscriptions, qualification au second tour à 12,5 % des inscrits, triangulaires." },
+    { when: "2032", sub: "précédent : mars 2026", d: new Date("2032-03-15"), t: "Élections municipales", p: "Près de 35 000 scrutins locaux : suivi des grandes villes et de leurs arrondissements." },
+  ];
+  $("#cal").innerHTML = items.map(x => {
+    const days = daysTo(x.d);
+    const rel = days > 400 ? `dans ~${Math.round(days / 30.4)} mois` : `J-${days}`;
+    return `<div class="cal-row"><div class="when"><b>${x.when}</b><span>${x.sub}</span></div><div><h3>${x.t}</h3><p>${x.p}</p></div>
+      <div class="status"><span class="pill ${x.st === "live" ? "live" : ""}">${x.st === "live" ? "Suivi en cours" : "À préparer"}</span><span class="num note">${rel}</span></div></div>`;
+  }).join("");
+}
+
+// ================================================================== BASE PARTAGÉE
+const getJSON = url => fetch(url + "?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : null).catch(() => null);
+async function loadPolls() {
+  const [polls, duels] = await Promise.all([getJSON("data/polls.json"), getJSON("data/duels.json")]);
+  if (!polls) { if (!SITE.polls.length) $("#board").innerHTML = `<div class="state"><b>Sondages indisponibles</b>Le fichier des sondages n'a pas pu être chargé. Recharge la page.</div>`; return; }
+  SITE.polls = polls.filter(p => p && p.date && Array.isArray(p.hypotheses));
+  SITE.duels = duels;
+  Polls.renderAll(); Night.syncFromPolls();
+}
+async function loadConfigAndResults() {
+  const c = await getJSON("data/config.json") || {};
+  const prev = SITE.phase;
+  SITE.phase = c.phase || "sondages";
+  if (SITE.phase !== prev && !location.hash) route();
+  if (SITE.phase === "resultats") {
+    for (const t of [1, 2]) {
+      const d = await getJSON(`data/resultats/t${t}.json`);
+      if (d && d.communes) Night.setLive(t, [d], d.maj ? new Date(d.maj).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "");
+    }
+  }
+  return SITE.phase;
+}
+async function connect() {
+  await loadPolls();
+  const phase = await loadConfigAndResults();
+  // soir de vote : résultats rechargés chaque minute ; sinon sondages toutes les 10 minutes
+  setInterval(loadConfigAndResults, phase === "resultats" ? 60000 : 600000);
+  setInterval(loadPolls, 600000);
+}
+
+renderCal();
+route();
+ticker();
+connect();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+{
+ "maj": "2026-10-22",
+ "source": "sondax.fr",
+ "items": [
+  {
+   "a": "Le Pen",
+   "b": "Philippe",
+   "sa": 56,
+   "sb": 44,
+   "n": 22,
+   "src": "OpinionWay, 22/10/2026"
+  },
+  {
+   "a": "Le Pen",
+   "b": "Glucksmann",
+   "sa": 56,
+   "sb": 44,
+   "n": 11,
+   "src": "OpinionWay, 22/10/2026"
+  },
+  {
+   "a": "Le Pen",
+   "b": "Attal",
+   "sa": 58,
+   "sb": 42,
+   "n": 14,
+   "src": "Ifop, 19/10/2026"
+  },
+  {
+   "a": "Le Pen",
+   "b": "Retailleau",
+   "sa": 58,
+   "sb": 42,
+   "n": 3,
+   "src": "Ifop, 25/08/2026"
+  },
+  {
+   "a": "Le Pen",
+   "b": "Hollande",
+   "sa": 59,
+   "sb": 41,
+   "n": 4,
+   "src": "Ifop, 19/10/2026"
+  },
+  {
+   "a": "Le Pen",
+   "b": "Mélenchon",
+   "sa": 69,
+   "sb": 31,
+   "n": 21,
+   "src": "OpinionWay, 22/10/2026"
+  },
+  {
+   "a": "Philippe",
+   "b": "Mélenchon",
+   "sa": 66,
+   "sb": 34,
+   "n": 2,
+   "src": "YouGov, 15/10/2026"
+  }
+ ]
+}
