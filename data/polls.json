@@ -1,13 +1,13 @@
 [
 {
-"id": "2026-11-03_ifop",
-"date": "2026-11-03",
+"id": "2026-10-29_ifop",
+"date": "2026-10-29",
 "institut": "IFOP",
-"echantillon": null,
+"echantillon": 1501,
 "tour": 1,
 "commanditaire": "LCI, Le Figaro, Sud Radio (avec Fiducial)",
-"terrain": "octobre 2026, dates exactes non communiquées sur les visuels ; date = publication",
-"source": "Ifop Opinion sur X, publié le 03/11/2026 (2 configurations relevées)",
+"terrain": "27-29 octobre 2026 (publié le 03/11/2026)",
+"source": "Ifop Opinion sur X, publié le 03/11/2026 (2 configurations relevées) ; terrain et échantillon : sondax.fr, i24news.tv",
 "hypotheses": [
 {
 "Le Pen": 36,
